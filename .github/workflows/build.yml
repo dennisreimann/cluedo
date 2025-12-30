@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  # Run the build for pushes and pull requests targeting main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout doc repo and its dependencies
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      # Install and build
+      - name: Install
+        run: npm ci
+      - name: Build
+        env:
+          NODE_OPTIONS: --max_old_space_size=8192
+          NODE_ENV: production
+        run: |-
+          npm run build
+      - name: Deploy
+        if: success() && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_dir: ./dist
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          cname: cluedo.innovated.de
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
